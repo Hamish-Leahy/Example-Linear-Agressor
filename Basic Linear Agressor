@@ -1,0 +1,80 @@
+" " "
+create an example linear agressor using pytorch 
+1. create x and y input and outputs
+2. Create the weight vector as a tensor
+3. run a learning loop and fit the regresor with SGD
+4. test the accuracy and print the results 
+" " "
+
+import torch
+from torch.autograd import Variable
+import torch.nn as nn
+from sklearn.datasets import load_boston
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+
+X, y = load_boston(return_X_y=True)
+
+# scale the data
+X_scaler = StandardScaler()
+y_scaler = StandardScaler()
+
+X = X_scaler.fit_transform(X)
+y = y_scaler.fit_transform(y.reshape(-1, 1))
+
+# split the data into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# convert the data to PyTorch Tensors
+X_train_tensor = torch.from_numpy(X_train).float()
+y_train_tensor = torch.from_numpy(y_train).float()
+
+X_test_tensor = torch.from_numpy(X_test).float()
+y_test_tensor = torch.from_numpy(y_test).float()
+
+# create a linear regressor in PyTorch
+regressor = nn.Linear(X_train.shape[1], 1)
+
+# set up the optimizer and learning rate
+optimizer = torch.optim.SGD(regressor.parameters(), lr=0.001)
+
+# set up the number of epochs
+num_epochs = 100
+
+# train the linear regressor
+for epoch in range(num_epochs):
+    # convert data to PyTorch Variables
+    inputs = Variable(X_train_tensor)
+    targets = Variable(y_train_tensor)
+
+    # clear gradients
+    optimizer.zero_grad()
+
+    # get predictions
+    predictions = regressor(inputs)
+
+    # calculate loss
+    loss = nn.MSELoss()(predictions, targets)
+
+    # backpropagate
+    loss.backward()
+
+    # update weights
+    optimizer.step()
+
+    # print progress
+    if (epoch+1) % 10 == 0:
+        print ('Epoch [%d/%d], Loss: %.4f' 
+               %(epoch+1, num_epochs, loss.item()))
+
+# make predictions on the test set
+with torch.no_grad():
+    inputs = Variable(X_test_tensor)
+    predictions = regressor(inputs)
+
+# scale the predictions back to the original range
+predictions = y_scaler.inverse_transform(predictions.data)
+
+# calculate R2 score
+r
